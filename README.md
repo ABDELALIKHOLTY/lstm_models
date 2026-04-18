@@ -44,7 +44,7 @@ The standard LSTM struggles to maintain the sequential influence of the negation
 - **Prediction:** 🟢 `POSITIVE` (Score: 0.7021 | 70% Confidence)
 - **LIME Explanation:**
 <p align="center">
-  <img src="assets/lstm.png" alt="Basic LSTM Prediction" width="100%"/>
+  <img width="826" height="704" alt="lstm" src="https://github.com/user-attachments/assets/4e13ce2f-a561-4580-a5a4-ab29f02891d1" />
 </p>
 
 #### ✅ Model 2: LSTM + Bahdanau Attention (Success Instance)
@@ -52,7 +52,11 @@ The Attention mechanism successfully identifies the linguistic relationship. It 
 - **Prediction:** 🔴 `NEGATIVE` (Score: 0.0271 | 97% Confidence)
 - **LIME Explanation:**
 <p align="center">
-  <img src="assets/lstm_att.png" alt="LSTM Attention Prediction" width="100%"/>
+<img width="824" height="689" alt="lstm_att" src="https://github.com/user-attachments/assets/9cc3dbcf-3290-4e3a-81ad-7b44957d9386" />
+
+  
+![Uploading lstm.png…]()
+
 </p>
 
 ---
