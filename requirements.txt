@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pydantic
+tensorflow
+tf-keras
+numpy
+vaderSentiment
+beautifulsoup4
+nltk
+textblob
+lime
+scikit-learn
+pandas
+python-multipart
