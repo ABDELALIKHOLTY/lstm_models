@@ -54,9 +54,6 @@ The Attention mechanism successfully identifies the linguistic relationship. It 
 <p align="center">
 <img width="824" height="689" alt="lstm_att" src="https://github.com/user-attachments/assets/9cc3dbcf-3290-4e3a-81ad-7b44957d9386" />
 
-  
-![Uploading lstm.png…]()
-
 </p>
 
 ---
