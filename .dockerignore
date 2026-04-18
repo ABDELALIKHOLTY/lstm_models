@@ -1,0 +1,17 @@
+.venv*
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.db
+.sqlite3
+.git/
+.gitignore
+*.ipynb
+IMDB Dataset.csv
+README.md
+Dockerfile
+.dockerignore
+implementation_plan.md
+task.md
+walkthrough.md
