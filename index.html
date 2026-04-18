@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentimentAI | Neural Analysis Dashboard</title>
+    <meta name="description" content="Deep learning sentiment analysis with LIME explainability for LSTM models.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dim: rgba(99,102,241,0.15);
+            --bg: #d7dbe2;
+            --card: rgba(15, 23, 42, 0.8);
+            --card2: rgba(22, 33, 58, 0.7);
+            --glass-border: rgba(255,255,255,0.08);
+            --glass-border-bright: rgba(255,255,255,0.15);
+            --text: #f1f5f9;
+            --text-dim: #64748b;
+            --text-mid: #94a3b8;
+            --positive: #22c55e;
+            --positive-dim: rgba(34,197,94,0.15);
+            --negative: #ef4444;
+            --negative-dim: rgba(239,68,68,0.15);
+            --warn: #f59e0b;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            background: var(--bg);
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99,102,241,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 0% 100%, rgba(139,92,246,0.08) 0%, transparent 60%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(99,102,241,0.12);
+            border: 2px solid #6366f1;
+            border-radius: 99px;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #4c1d95;
+            margin-bottom: 1rem;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+        .logo-dot { width: 6px; height: 6px; background: var(--positive); border-radius: 50%; box-shadow: 0 0 6px var(--positive); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 50%, #6366f1 100%);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.1;
+            margin-bottom: 0.75rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+        header p { color: #475569; font-size: 1.05rem; font-weight: 500; }
+
+        .model-status-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            opacity: 0;
+        }
+        .model-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--card);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 0.6rem 1rem;
+            flex: 1;
+            min-width: 160px;
+        }
+        .model-chip-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--positive);
+            box-shadow: 0 0 8px var(--positive);
+            flex-shrink: 0;
+        }
+        .model-chip-info { display: flex; flex-direction: column; }
+        .model-chip-name { font-size: 0.8rem; font-weight: 600; }
+        .model-chip-type { font-size: 0.68rem; color: var(--text-dim); }
+
+        .main-card {
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 30px 60px -20px rgba(0,0,0,0.6);
+            opacity: 0;
+            transform: scale(0.97);
+        }
+
+        textarea {
+            width: 100%;
+            background: rgba(6,11,20,0.7);
+            border: 1px solid var(--glass-border-bright);
+            border-radius: 14px;
+            padding: 1.2rem 1.4rem;
+            color: var(--text);
+            font-size: 1.05rem;
+            line-height: 1.7;
+            resize: none;
+            min-height: 130px;
+            transition: all 0.3s;
+            outline: none;
+        }
+        textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+        textarea::placeholder { color: var(--text-dim); }
+
+        .section-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-dim);
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+        }
+        .examples-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 0.8rem;
+        }
+        .ex-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--card2);
+            border: 1px solid var(--glass-border);
+            color: var(--text-mid);
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.76rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ex-btn:hover { border-color: var(--primary); color: var(--text); }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .model-tabs {
+            display: flex;
+            background: rgba(6,11,20,0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 3px;
+        }
+        .mtab {
+            padding: 0.6rem 1.5rem;
+            border-radius: 7px;
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mtab.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
+
+        .analyze-btn {
+            margin-left: auto;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 0.7rem 2rem;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .analyze-btn:hover { background: var(--primary-light); transform: translateY(-1px); }
+        .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* RESULTS */
+        #results-section { display: none; margin-top: 2rem; }
+        .divider { height: 1px; background: var(--glass-border); margin: 1.5rem 0; }
+
+        .prediction-banner {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid;
+            flex-wrap: wrap;
+        }
+        .prediction-banner.positive { background: var(--positive-dim); border-color: rgba(34,197,94,0.3); }
+        .prediction-banner.negative { background: var(--negative-dim); border-color: rgba(239,68,68,0.3); }
+        
+        .sentiment-icon { font-size: 2.5rem; }
+        .sentiment-text h2 { font-size: 1.8rem; font-weight: 800; }
+        .sentiment-text p { font-size: 0.85rem; color: var(--text-mid); }
+        .prediction-banner.positive .sentiment-text h2 { color: #4ade80; }
+        .prediction-banner.negative .sentiment-text h2 { color: #f87171; }
+
+        .score-pills { display: flex; gap: 0.8rem; margin-left: auto; flex-wrap: wrap; }
+        .score-pill {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 0.7rem 1.1rem;
+            text-align: center;
+            min-width: 100px;
+        }
+        .score-pill-label { font-size: 0.65rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.3rem; }
+        .score-pill-val { font-size: 1.1rem; font-weight: 700; font-family: var(--mono); color: var(--primary-light); }
+
+        .confidence-row { margin-top: 1rem; }
+        .conf-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-top: 0.4rem; }
+        .conf-fill { height: 100%; width: 0; transition: width 1s cubic-bezier(0.4,0,0.2,1); }
+        .conf-fill.positive { background: linear-gradient(90deg, #16a34a, #4ade80); }
+        .conf-fill.negative { background: linear-gradient(90deg, #b91c1c, #f87171); }
+
+        /* LIME PANEL */
+        .panel {
+            background: var(--card2);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+        }
+        .lime-highlight-box {
+            background: rgba(6,11,20,0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.2rem;
+            line-height: 2.6;
+            font-size: 1.05rem;
+            margin-bottom: 1.5rem;
+        }
+        .word-chip {
+            display: inline-block;
+            padding: 0.1rem 0.5rem;
+            border-radius: 6px;
+            margin: 0.1rem 0.15rem;
+            font-size: 0.95em;
+            cursor: default;
+        }
+        .word-chip.neutral-word { color: var(--text-mid); }
+        
+        .lime-bar-row { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.6rem; }
+        .lime-word-label { font-size: 0.85rem; font-family: var(--mono); width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lime-bar-wrap { flex: 1; display: flex; align-items: center; height: 18px; }
+        .lime-bar-center { width: 2px; height: 14px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+        .lime-fill-pos { height: 10px; background: linear-gradient(90deg, rgba(34,197,94,0.5), var(--positive)); border-radius: 0 4px 4px 0; }
+        .lime-fill-neg { height: 10px; background: linear-gradient(90deg, var(--negative), rgba(239,68,68,0.5)); border-radius: 4px 0 0 4px; margin-left: auto; }
+        .lime-val { font-size: 0.8rem; font-family: var(--mono); width: 65px; text-align: right; margin-left: auto; }
+
+        /* LOADING */
+        #loading-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(6,11,20,0.8); backdrop-filter: blur(4px);
+            z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1.5rem;
+        }
+        #loading-overlay.show { display: flex; }
+        .loading-ring { width: 50px; height: 50px; border: 3px solid rgba(99,102,241,0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.9s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div id="loading-overlay">
+    <div class="loading-ring"></div>
+    <div style="text-align:center;">
+        <div style="color:var(--text); font-weight:600; font-size:1.1rem;">Analyzing Sentiment</div>
+        <div style="color:var(--text-dim); font-size:0.85rem; margin-top:0.3rem;">Running Neural Inference & LIME Explainability</div>
+    </div>
+</div>
+
+<div class="container">
+    <header id="header">
+        <div class="logo-badge"><div class="logo-dot"></div> SentimentAI · LSTM Dashboard</div>
+        <h1>Deep Sentiment Analysis</h1>
+        <p>Neural inference with LSTM models and full LIME explainability</p>
+    </header>
+
+    <div class="model-status-bar" id="status-bar">
+        <div class="model-chip">
+            <div class="model-chip-dot"></div>
+            <div class="model-chip-info">
+                <span class="model-chip-name">LSTM</span>
+                <span class="model-chip-type">Standard Recurrent Network</span>
+            </div>
+        </div>
+        <div class="model-chip">
+            <div class="model-chip-dot" style="background:#a855f7; box-shadow:0 0 8px #a855f7;"></div>
+            <div class="model-chip-info">
+                <span class="model-chip-name">LSTM + Attention</span>
+                <span class="model-chip-type">Bahdanau Attention Mechanism</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-card" id="main-card">
+        <textarea id="text-input" placeholder="Enter a sentence to analyze, e.g. 'This film was not bad at all, actually quite brilliant.'"></textarea>
+
+        <div style="margin-top: 0.8rem;">
+            <div class="section-label">Quick Examples</div>
+            <div class="examples-row">
+                <button class="ex-btn" onclick="setExample('This movie was absolutely brilliant and I loved every second of it!')"> Positive</button>
+                <button class="ex-btn" onclick="setExample('The film was terrible and completely waste of time.')">Negative</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="model-tabs">
+                <button class="mtab active" onclick="setModel('lstm', this)">Basic LSTM</button>
+                <button class="mtab" onclick="setModel('attention', this)">LSTM + Attention</button>
+            </div>
+
+            <button class="analyze-btn" id="analyze-btn" onclick="runAnalysis()">
+                <div id="btn-text">⚡ Analyze Text</div>
+            </button>
+        </div>
+
+        <div id="results-section">
+            <div class="divider"></div>
+
+            <div class="prediction-banner" id="prediction-banner">
+                <div class="sentiment-icon" id="sentiment-icon">😊</div>
+                <div class="sentiment-text">
+                    <h2 id="sentiment-label">Positive</h2>
+                    <p id="prediction-meta">LSTM Model</p>
+                </div>
+                <div class="score-pills">
+                    <div class="score-pill">
+                        <div class="score-pill-label">Neural Score</div>
+                        <div class="score-pill-val" id="pill-score">0.0000</div>
+                    </div>
+                    <div class="score-pill">
+                        <div class="score-pill-label">Confidence</div>
+                        <div class="score-pill-val" id="pill-conf" style="color:var(--text);">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="confidence-row">
+                <div style="font-size:0.75rem; color:var(--text-dim); display:flex; justify-content:space-between;">
+                    <span>Negative</span><span>Positive</span>
+                </div>
+                <div class="conf-track">
+                    <div class="conf-fill" id="conf-fill"></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.2rem;">
+                    <span style="font-size:1.2rem;">🔍</span>
+                    <span style="font-weight:700; font-size:1.05rem;">LIME Interpretability Report</span>
+                    <span style="margin-left:auto; font-size:0.7rem; background:rgba(168,85,247,0.15); color:#c084fc; padding:0.2rem 0.6rem; border-radius:6px; border:1px solid rgba(168,85,247,0.3);">Local Explanation</span>
+                </div>
+
+                <div class="section-label">Algorithmic Highlight</div>
+                <div class="lime-highlight-box" id="lime-highlight"></div>
+
+                <div class="section-label" style="margin-top:1.5rem; margin-bottom:0.8rem;">Feature Weights</div>
+                <div id="lime-bars"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentModel = 'lstm';
+
+    window.addEventListener('load', () => {
+        gsap.to('#header', { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' });
+        gsap.to('#status-bar', { opacity: 1, duration: 0.6, delay: 0.2 });
+        gsap.to('#main-card', { opacity: 1, scale: 1, duration: 0.7, delay: 0.3, ease: 'back.out(1.2)' });
+    });
+
+    function setExample(text) {
+        document.getElementById('text-input').value = text;
+    }
+
+    function setModel(type, el) {
+        currentModel = type;
+        document.querySelectorAll('.mtab').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    async function runAnalysis() {
+        const text = document.getElementById('text-input').value.trim();
+        if (!text) return;
+
+        const btn = document.getElementById('analyze-btn');
+        const overlay = document.getElementById('loading-overlay');
+        btn.disabled = true;
+        document.getElementById('results-section').style.display = 'none';
+        overlay.classList.add('show');
+
+        try {
+            const res = await fetch('/api/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, model_type: currentModel })
+            });
+
+            if (!res.ok) throw new Error(await res.text());
+            const data = await res.json();
+            renderResults(data);
+        } catch (err) {
+            console.error(err);
+            alert('Error: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            overlay.classList.remove('show');
+        }
+    }
+
+    function renderResults(data) {
+        const section = document.getElementById('results-section');
+        section.style.display = 'block';
+        gsap.fromTo(section, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
+
+        const isPos = data.sentiment === 'POSITIVE';
+        const banner = document.getElementById('prediction-banner');
+        banner.className = 'prediction-banner ' + data.sentiment.toLowerCase();
+
+        document.getElementById('sentiment-icon').textContent = isPos ? '😊' : '😞';
+        document.getElementById('sentiment-label').textContent = data.sentiment;
+        
+        document.getElementById('prediction-meta').textContent = `Model: ${data.model_used}`;
+        document.getElementById('pill-score').textContent = data.score.toFixed(4);
+        document.getElementById('pill-conf').textContent = Math.round(data.confidence * 100) + '%';
+
+        const fill = document.getElementById('conf-fill');
+        fill.className = 'conf-fill ' + data.sentiment.toLowerCase();
+        setTimeout(() => { fill.style.width = (data.score * 100) + '%'; }, 50);
+
+        renderLime(data.text, data.lime_data);
+    }
+
+    function renderLime(text, lime) {
+        const weights = lime.word_weights || [];
+        const weightMap = new Map(weights.map(([w, s]) => [w.toLowerCase(), s]));
+
+        const highlightBox = document.getElementById('lime-highlight');
+        highlightBox.innerHTML = '';
+        text.split(/(\s+)/).forEach(tok => {
+            if (/^\s+$/.test(tok) || !tok) {
+                highlightBox.appendChild(document.createTextNode(tok));
+                return;
+            }
+            const clean = tok.toLowerCase().replace(/[.,!?;:'"()]/g, '');
+            const score = weightMap.get(clean) || 0;
+            
+            const span = document.createElement('span');
+            span.className = 'word-chip';
+            span.textContent = tok;
+            
+            if (Math.abs(score) > 0.001) {
+                const alpha = Math.min(0.9, Math.abs(score) * 8);
+                span.style.background = score > 0 ? `rgba(34,197,94,${alpha})` : `rgba(239,68,68,${alpha})`;
+                span.style.color = '#fff';
+            } else {
+                span.className += ' neutral-word';
+            }
+            highlightBox.appendChild(span);
+        });
+
+        const barsContainer = document.getElementById('lime-bars');
+        barsContainer.innerHTML = '';
+        const maxAbs = Math.max(...weights.map(([,s]) => Math.abs(s)), 0.001);
+        
+        [...weights].sort((a,b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 15).forEach(([word, score]) => {
+            const pct = (Math.abs(score) / maxAbs * 100).toFixed(1);
+            const isPos = score > 0;
+            const color = isPos ? 'var(--positive)' : 'var(--negative)';
+            
+            barsContainer.innerHTML += `
+                <div class="lime-bar-row">
+                    <div class="lime-word-label">${word}</div>
+                    <div class="lime-bar-wrap">
+                        ${isPos 
+                            ? `<div class="lime-bar-center"></div><div class="lime-fill-pos" style="width:${pct}%;"></div>` 
+                            : `<div class="lime-fill-neg" style="width:${pct}%;"></div><div class="lime-bar-center"></div>`
+                        }
+                    </div>
+                    <div class="lime-val" style="color:${color};">${score > 0 ? '+' : ''}${score.toFixed(4)}</div>
+                </div>
+            `;
+        });
+    }
+</script>
+</body>
+</html>
